@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Do you love me?</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100%;
+      font-family: Arial, sans-serif;
+    }
+
+    /* PART 1: Love Question */
+    #part1 {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, #18224b, #04060d 70%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 1s ease-in-out;
+    }
+
+    #part1.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 6px #fff;
+      animation: tw 2s infinite ease-in-out;
+    }
+
+    @keyframes tw {
+      50% { opacity: 0.2; transform: scale(0.6); }
+    }
+
+    #sky {
+      position: absolute;
+      inset: 0;
+    }
+
+    .const {
+      position: absolute;
+      opacity: 0.8;
+    }
+
+    .const line {
+      stroke: #9fdcff;
+      stroke-width: 1.2;
+    }
+
+    .const circle {
+      fill: #fff;
+    }
+
+    .wrap {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 2;
+    }
+
+    h1 {
+      text-shadow: 0 0 16px #fff;
+      font-size: 3rem;
+      color: #fff;
+      margin: 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 30px;
+    }
+
+    button {
+      padding: 14px 34px;
+      font-size: 20px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    #yes {
+      background: #ff8fb8;
+      border: none;
+      color: #fff;
+    }
+
+    #no {
+      background: transparent;
+      border: 2px solid #fff;
+      color: #fff;
+      z-index: 102;
+    }
+
+    #pop {
+      position: fixed;
+      left: 50%;
+      top: 18%;
+      transform: translateX(-50%);
+      opacity: 0;
+      padding: 12px 20px;
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      transition: 0.3s;
+      z-index: 101;
+      color: #fff;
+    }
+
+    /* PART 2: Falling Text */
+    #part2 {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 40%, #18224b, #04060d 70%);
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    #part2.fade-in {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #part2 .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 1; }
+    }
+
+    #scene-container {
+      width: 100vw;
+      height: 100vh;
+      perspective: 1500px;
+      overflow: hidden;
+    }
+
+    #scene {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transform: rotateX(0deg) rotateY(0deg) scale(0.85);
+      transition: transform 0.1s linear;
+      position: relative;
+    }
+
+    .falling {
+      position: absolute;
+      top: -10vh;
+      transform-style: preserve-3d;
+      transition: opacity 0.1s;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(0) translateZ(var(--depth)); opacity: 1; }
+      100% { transform: translateY(120vh) translateZ(var(--depth)); opacity: 0; }
+    }
+
+    @keyframes colorShift {
+      0%   { color: #ffb6c1; }
+      14%  { color: #c9f9ff; }
+      28%  { color: #f8f8ff; }
+      42%  { color: #b2fefa; }
+      57%  { color: #ffdee9; }
+      71%  { color: #c9f9ff; }
+      85%  { color: #f8f8ff; }
+      100% { color: #ffb6c1; }
+    }
+
+    .text {
+      font-size: 14px;
+      color: #ffb6c1;
+      text-shadow: 0 0 10px #ff69b4;
+      will-change: transform, opacity;
+    }
+
+    .animate-text {
+      animation: fall 6s linear forwards, colorShift 8s ease-in-out infinite;
+    }
+
+    .heart {
+      font-size: 12px;
+      color: pink;
+    }
+
+    .animate-heart {
+      animation: fall 5s linear forwards;
+    }
+
+    #intro, #playButton {
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      z-index: 10;
+      display: none;
+    }
+
+    #intro {
+      top: 38%;
+      color: #ffc0cb;
+      font-size: 16px;
+      text-shadow: 0 0 10px #ff69b4;
+      margin-bottom: 8px;
+    }
+
+    #playButton {
+      top: calc(38% + 40px);
+      background: #ff69b4;
+      border: none;
+      color: white;
+      font-size: 16px;
+      padding: 8px 20px;
+      border-radius: 30px;
+      box-shadow: 0 0 10px #ff69b4;
+      cursor: pointer;
+    }
+
+    @media (max-width: 600px) {
+      .text { font-size: 12px; }
+      .heart { font-size: 10px; }
+      #intro { font-size: 14px; }
+      #playButton {
+        font-size: 14px;
+        padding: 6px 16px;
+      }
+      h1 { font-size: 2rem; }
+    }
+
+    .hidden {
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10vh) translateZ(var(--depth));
+      animation: none !important;
+    }
+
+    #audioPlayer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 10px 20px;
+      border-radius: 50px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: none;
+    }
+
+    #part2.fade-in #audioPlayer {
+      display: block;
+    }
+
+    #audioPlayer audio {
+      width: 300px;
+      height: 30px;
+      outline: none;
+    }
+
+    @media (max-width: 600px) {
+      #audioPlayer audio {
+        width: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- PART 1: Love Question -->
+<div id="part1">
+  <div id="sky"></div>
+  <svg class="const" style="left:7%;top:8%" width="220" height="140">
+    <line x1="20" y1="30" x2="60" y2="60"/><line x1="60" y1="60" x2="110" y2="35"/><line x1="110" y1="35" x2="170" y2="70"/><line x1="170" y1="70" x2="205" y2="25"/>
+    <circle cx="20" cy="30" r="2.5"/><circle cx="60" cy="60" r="2.5"/><circle cx="110" cy="35" r="2.5"/><circle cx="170" cy="70" r="2.5"/><circle cx="205" cy="25" r="2.5"/>
+  </svg>
+  <svg class="const" style="right:8%;bottom:10%" width="200" height="120">
+    <line x1="25" y1="80" x2="70" y2="35"/><line x1="70" y1="35" x2="120" y2="80"/><line x1="120" y1="80" x2="175" y2="35"/>
+    <circle cx="25" cy="80" r="2.5"/><circle cx="70" cy="35" r="2.5"/><circle cx="120" cy="80" r="2.5"/><circle cx="175" cy="35" r="2.5"/>
+  </svg>
+  <div id="pop"></div>
+  <div class="wrap" id="main">
+    <h1>Do you love me?</h1>
+    <div class="row"><button id="yes">YES</button><button id="no">NO</button></div>
+  </div>
+</div>
+
+<!-- PART 2: Falling Text -->
+<div id="part2">
+  <div id="scene-container">
+    <div id="scene"></div>
+  </div>
+  <div id="intro"></div>
+  <button id="playButton">Bắt đầu</button>
+  <div id="audioPlayer">
+    <audio controls autoplay loop>
+      <source src="https://raw.githubusercontent.com/vietduygiapdz/idkwhatisthis/d195b47e111c67c8eccecc36f76450ff3eb6a9f2/BERLIN%20-%20Khoi%20Vu%20%20(Official%20Lyrics%20Video)%20-%20Khoi%20Vu%20Official.mp3" type="audio/mpeg">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+</div>
+
+<script>
+  // "I love you" in 16 languages
+  const baseMessages = [
+    "I love you",        // English
+    "Anh yêu em",        // Vietnamese
+    "Je t'aime",         // French
+    "Ich liebe dich",    // German
+    "Te amo",            // Spanish
+    "我爱你",            // Chinese
+    "愛してる",          // Japanese
+    "나는 너를 사랑해",   // Korean
+    "Ti amo",            // Italian
+    "Я люблю тебя",      // Russian
+    "Ik hou van jou",    // Dutch
+    "Eu te amo",         // Portuguese
+    "รักษาเนื้อที่",      // Thai
+    "أحبك",              // Arabic
+    "Αγαπώ σε",          // Greek
+    "ฉันรักคุณ",         // Thai (alternative)
+  ];
+  
+  // Repeat messages to create more falling text
+  const messages = [];
+  for (let i = 0; i < 5; i++) {
+    messages.push(...baseMessages);
+  }
+
+  const hearts = ["💗", "💓", "💖", "💞", "💝", "❤️", "💕"];
+  const scene = document.getElementById('scene');
+
+  // Create stars for part 2
+  for (let i = 0; i < 150; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    star.style.top = `${Math.random() * 100}vh`;
+    star.style.left = `${Math.random() * 100}vw`;
+    star.style.animationDuration = `${2 + Math.random() * 3}s`;
+    document.getElementById('part2').appendChild(star);
+  }
+
+  // Create stars for part 1
+  for (let i = 0; i < 320; i++) {
+    const star = document.createElement('div');
+    star.className = 'star';
+    let z = 1 + Math.random() * 2.5;
+    star.style.width = star.style.height = z + 'px';
+    star.style.left = Math.random() * 100 + '%';
+    star.style.top = Math.random() * 100 + '%';
+    star.style.animationDuration = (1 + Math.random() * 3) + 's';
+    document.getElementById('sky').appendChild(star);
+  }
+
+  // Pre-create text elements
+  const textElements = messages.map(msg => {
+    const el = document.createElement('div');
+    el.className = 'falling text hidden';
+    const z = Math.floor(Math.random() * 1000) - 600;
+    el.style.left = `${Math.random() * 80}vw`;
+    el.style.setProperty('--depth', `${z}px`);
+    el.innerText = msg;
+    scene.appendChild(el);
+    return el;
+  });
+
+  // Pre-create heart elements
+  const heartElements = [];
+  for (let i = 0; i < 150; i++) {
+    const el = document.createElement('div');
+    el.className = 'falling heart hidden';
+    const z = Math.floor(Math.random() * 1000) - 600;
+    el.style.left = `${Math.random() * 100}vw`;
+    el.style.setProperty('--depth', `${z}px`);
+    el.innerText = hearts[Math.floor(Math.random() * hearts.length)];
+    scene.appendChild(el);
+    heartElements.push(el);
+  }
+
+  let rotateX = 0;
+  let rotateY = 0;
+  let scale = 0.85;
+  let startX, startY;
+
+  function onStart(e) {
+    startX = e.touches ? e.touches[0].clientX : e.clientX;
+    startY = e.touches ? e.touches[0].clientY : e.clientY;
+    document.addEventListener(e.type === 'touchstart' ? 'touchmove' : 'mousemove', onMove);
+    document.addEventListener(e.type === 'touchstart' ? 'touchend' : 'mouseup', onEnd);
+  }
+
+  function onMove(e) {
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const dx = x - startX;
+    const dy = y - startY;
+    rotateY += dx * 0.2;
+    rotateX -= dy * 0.2;
+    scene.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+    startX = x;
+    startY = y;
+  }
+
+  function onEnd() {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+  }
+
+  document.addEventListener("wheel", function(e) {
+    e.preventDefault();
+    scale += e.deltaY * -0.001;
+    scale = Math.min(Math.max(0.5, scale), 2);
+    scene.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scale})`;
+  }, { passive: false });
+
+  scene.addEventListener('mousedown', onStart);
+  scene.addEventListener('touchstart', onStart);
+
+  function startFalling(element, duration, delay) {
+    element.classList.remove('hidden');
+    element.style.opacity = '0';
+    setTimeout(() => {
+      element.style.opacity = '1';
+      element.style.animationDuration = `${duration}s`;
+      element.style.animationDelay = '0s';
+      element.classList.add(element.classList.contains('text') ? 'animate-text' : 'animate-heart');
+
+      element.addEventListener('animationend', () => {
+        element.classList.remove('animate-text', 'animate-heart');
+        element.classList.add('hidden');
+        setTimeout(() => {
+          const newDuration = element.classList.contains('text') ? 6 + Math.random() * 6 : 5 + Math.random() * 5;
+          const newDelay = Math.random() * 0.2;
+          startFalling(element, newDuration, newDelay);
+        }, 0);
+      }, { once: true });
+    }, delay * 1000);
+  }
+
+  // Part 1: Love Question
+  const no = document.getElementById('no');
+  const pop = document.getElementById('pop');
+  let tries = 0;
+  let fixed = false;
+
+  function relocate() {
+    if (!fixed) {
+      const r = no.getBoundingClientRect();
+      no.style.position = 'fixed';
+      no.style.left = r.left + 'px';
+      no.style.top = r.top + 'px';
+      fixed = true;
+    }
+    
+    // Get button dimensions
+    const buttonRect = no.getBoundingClientRect();
+    const buttonWidth = buttonRect.width || 110;
+    const buttonHeight = buttonRect.height || 60;
+    const safeMargin = 50;
+    
+    // Calculate safe boundaries
+    const minX = safeMargin;
+    const maxX = window.innerWidth - buttonWidth - safeMargin;
+    const minY = safeMargin;
+    const maxY = window.innerHeight - buttonHeight - safeMargin;
+    
+    // Ensure min <= max
+    const safeX = Math.min(maxX, Math.max(minX, minX + Math.random() * Math.max(0, maxX - minX)));
+    const safeY = Math.min(maxY, Math.max(minY, minY + Math.random() * Math.max(0, maxY - minY)));
+    
+    no.style.left = Math.floor(safeX) + 'px';
+    no.style.top = Math.floor(safeY) + 'px';
+  }
+
+  function show(t) {
+    pop.textContent = t;
+    pop.style.opacity = 1;
+    clearTimeout(show.t);
+    show.t = setTimeout(() => pop.style.opacity = 0, 1500);
+  }
+
+  function evade() {
+    tries++;
+    relocate();
+    const arr = tries == 1 ? ["Why did you choose no?...", "Choose yes pls :<"] : ["Why do you keep choosing no?...", "Please just press yes :<"];
+    show(arr[Math.floor(Math.random() * arr.length)]);
+  }
+
+  no.addEventListener('mouseenter', evade);
+  no.addEventListener('mousedown', e => {
+    e.preventDefault();
+    evade();
+  });
+
+  document.getElementById('yes').onclick = () => {
+    document.getElementById('main').innerHTML = "<h1>❤️ I knew it ❤️</h1><p style='color: white;'>You made my universe brighter ✨</p>";
+    
+    // Fade out part 1 after 1 second, fade in part 2
+    setTimeout(() => {
+      document.getElementById('part1').classList.add('fade-out');
+      document.getElementById('part2').classList.add('fade-in');
+      
+      // Start falling text and hearts
+      textElements.forEach((el, index) => {
+        const delay = index * 0.2 + Math.random() * 0.3;
+        const duration = 6 + Math.random() * 6;
+        startFalling(el, duration, delay);
+      });
+
+      heartElements.forEach((el, index) => {
+        const delay = index * 0.2 + Math.random() * 0.3;
+        const duration = 5 + Math.random() * 5;
+        startFalling(el, duration, delay);
+      });
+    }, 1500);
+  };
+</script>
+
+</body>
+</html>
