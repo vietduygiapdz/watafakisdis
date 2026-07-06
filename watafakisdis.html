@@ -479,100 +479,83 @@
   const no = document.getElementById('no');
   const pop = document.getElementById('pop');
   let tries = 0;
-  let fixed = false;
+  let canEvade = true;
+  let alreadyMoved = false;
 
-  function relocate() {
-    if (!fixed) {
-      const r = no.getBoundingClientRect();
-      no.style.position = 'fixed';
-      no.style.left = r.left + 'px';
-      no.style.top = r.top + 'px';
-      fixed = true;
+  function moveButton() {
+    // Lần đầu tiên move, lưu vị trí gốc và chuyển sang absolute
+    if (!alreadyMoved) {
+      const rect = no.getBoundingClientRect();
+      no.style.position = 'absolute';
+      no.style.left = rect.left + 'px';
+      no.style.top = rect.top + 'px';
+      no.style.margin = '0'; // Xóa margin mặc định
+      alreadyMoved = true;
     }
-    
-    // Đảm bảo button visible
-    no.style.visibility = 'visible';
-    no.style.opacity = '1';
-    
-    // Lấy kích thước
-    const w = no.offsetWidth || 110;
-    const h = no.offsetHeight || 60;
-    
-    // Viewport size
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    
-    // Padding từ viền
-    const padding = 20;
-    
-    // Min position
-    const minX = padding;
-    const minY = padding;
-    
-    // Max position (để button không vượt quá viewport)
-    const maxX = viewportWidth - w - padding;
-    const maxY = viewportHeight - h - padding;
-    
-    // Nếu button lớn hơn viewport, đặt nó ở góc
-    let newX = minX;
-    let newY = minY;
-    
-    if (maxX > minX) {
-      newX = minX + Math.random() * (maxX - minX);
-    }
-    
-    if (maxY > minY) {
-      newY = minY + Math.random() * (maxY - minY);
-    }
-    
-    // Clamp values để chắc chắn
-    newX = Math.max(minX, Math.min(newX, maxX));
-    newY = Math.max(minY, Math.min(newY, maxY));
-    
+
+    // Lấy kích thước button
+    const rect = no.getBoundingClientRect();
+    const btnW = rect.width;
+    const btnH = rect.height;
+
+    // Kích thước viewport
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    // Margin an toàn
+    const margin = 20;
+
+    // Tính vị trí mới
+    let newX = margin + Math.random() * Math.max(0, vw - btnW - 2 * margin);
+    let newY = margin + Math.random() * Math.max(0, vh - btnH - 2 * margin);
+
+    // Clamp để chắc chắn
+    newX = Math.max(margin, Math.min(newX, vw - btnW - margin));
+    newY = Math.max(margin, Math.min(newY, vh - btnH - margin));
+
     no.style.left = newX + 'px';
     no.style.top = newY + 'px';
   }
 
-  function show(t) {
-    pop.textContent = t;
-    pop.style.opacity = 1;
-    clearTimeout(show.t);
-    show.t = setTimeout(() => pop.style.opacity = 0, 1500);
-  }
-
-  function evade() {
+  function evadeClick() {
+    if (!canEvade) return;
+    
+    canEvade = false;
     tries++;
-    relocate();
-    const arr = tries == 1 ? ["Why did you choose no?...", "Choose yes pls :<"] : ["Why do you keep choosing no?...", "Please just press yes :<"];
-    show(arr[Math.floor(Math.random() * arr.length)]);
+    moveButton();
+    
+    const messages = tries === 1 
+      ? ["Why did you choose no?...", "Choose yes pls :<"]
+      : ["Why do you keep choosing no?...", "Please just press yes :<"];
+    
+    const msg = messages[Math.floor(Math.random() * messages.length)];
+    pop.textContent = msg;
+    pop.style.opacity = 1;
+    
+    clearTimeout(pop.hideTimer);
+    pop.hideTimer = setTimeout(() => {
+      pop.style.opacity = 0;
+    }, 1500);
+    
+    // Cooldown 400ms
+    setTimeout(() => {
+      canEvade = true;
+    }, 400);
   }
 
-  // Use mousemove to detect when cursor gets near the button
-  let lastEvadeTime = 0;
+  // Detect khi chuột gần button
   document.addEventListener('mousemove', (e) => {
     const rect = no.getBoundingClientRect();
-    
-    // Make button fixed on first approach
-    if (!fixed) {
-      no.style.position = 'fixed';
-      no.style.left = rect.left + 'px';
-      no.style.top = rect.top + 'px';
-      fixed = true;
-    }
-    
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
-    const distance = Math.hypot(
-      e.clientX - centerX,
-      e.clientY - centerY
+
+    const dist = Math.sqrt(
+      Math.pow(e.clientX - centerX, 2) + 
+      Math.pow(e.clientY - centerY, 2)
     );
-    
-    // If cursor is within 100px of button center and last evade was > 200ms ago
-    const now = Date.now();
-    if (distance < 100 && now - lastEvadeTime > 200) {
-      lastEvadeTime = now;
-      evade();
+
+    if (dist < 120 && canEvade) {
+      evadeClick();
     }
   });
 
