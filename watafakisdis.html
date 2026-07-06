@@ -108,6 +108,12 @@
       border: 2px solid #fff;
       color: #fff;
       z-index: 102;
+      transition: all 0.2s ease-out;
+    }
+
+    @keyframes noMove {
+      0% { opacity: 1; }
+      100% { opacity: 1; }
     }
 
     #pop {
@@ -484,24 +490,47 @@
       fixed = true;
     }
     
-    // Get button dimensions
-    const buttonRect = no.getBoundingClientRect();
-    const buttonWidth = buttonRect.width || 110;
-    const buttonHeight = buttonRect.height || 60;
-    const safeMargin = 50;
+    // Đảm bảo button visible
+    no.style.visibility = 'visible';
+    no.style.opacity = '1';
     
-    // Calculate safe boundaries
-    const minX = safeMargin;
-    const maxX = window.innerWidth - buttonWidth - safeMargin;
-    const minY = safeMargin;
-    const maxY = window.innerHeight - buttonHeight - safeMargin;
+    // Lấy kích thước
+    const w = no.offsetWidth || 110;
+    const h = no.offsetHeight || 60;
     
-    // Ensure min <= max
-    const safeX = Math.min(maxX, Math.max(minX, minX + Math.random() * Math.max(0, maxX - minX)));
-    const safeY = Math.min(maxY, Math.max(minY, minY + Math.random() * Math.max(0, maxY - minY)));
+    // Viewport size
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     
-    no.style.left = Math.floor(safeX) + 'px';
-    no.style.top = Math.floor(safeY) + 'px';
+    // Padding từ viền
+    const padding = 20;
+    
+    // Min position
+    const minX = padding;
+    const minY = padding;
+    
+    // Max position (để button không vượt quá viewport)
+    const maxX = viewportWidth - w - padding;
+    const maxY = viewportHeight - h - padding;
+    
+    // Nếu button lớn hơn viewport, đặt nó ở góc
+    let newX = minX;
+    let newY = minY;
+    
+    if (maxX > minX) {
+      newX = minX + Math.random() * (maxX - minX);
+    }
+    
+    if (maxY > minY) {
+      newY = minY + Math.random() * (maxY - minY);
+    }
+    
+    // Clamp values để chắc chắn
+    newX = Math.max(minX, Math.min(newX, maxX));
+    newY = Math.max(minY, Math.min(newY, maxY));
+    
+    no.style.left = newX + 'px';
+    no.style.top = newY + 'px';
   }
 
   function show(t) {
@@ -518,10 +547,33 @@
     show(arr[Math.floor(Math.random() * arr.length)]);
   }
 
-  no.addEventListener('mouseenter', evade);
-  no.addEventListener('mousedown', e => {
-    e.preventDefault();
-    evade();
+  // Use mousemove to detect when cursor gets near the button
+  let lastEvadeTime = 0;
+  document.addEventListener('mousemove', (e) => {
+    const rect = no.getBoundingClientRect();
+    
+    // Make button fixed on first approach
+    if (!fixed) {
+      no.style.position = 'fixed';
+      no.style.left = rect.left + 'px';
+      no.style.top = rect.top + 'px';
+      fixed = true;
+    }
+    
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    const distance = Math.hypot(
+      e.clientX - centerX,
+      e.clientY - centerY
+    );
+    
+    // If cursor is within 100px of button center and last evade was > 200ms ago
+    const now = Date.now();
+    if (distance < 100 && now - lastEvadeTime > 200) {
+      lastEvadeTime = now;
+      evade();
+    }
   });
 
   document.getElementById('yes').onclick = () => {
